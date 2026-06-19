@@ -10,6 +10,9 @@ SKIP_WEB ?= false
 NVML ?= auto
 VERSION ?= $(shell sed -n 's/.*Version = "\(.*\)".*/\1/p' beszel.go)
 RPMBUILD_DIR ?= $(CURDIR)/build/rpm
+# RPM forbids "-" in Version; map pre-release separators to "~" so versions like
+# 1.0.0-rc1 become 1.0.0~rc1, which RPM correctly sorts below the final release.
+RPM_VERSION := $(subst -,~,$(VERSION))
 
 # Detect glibc host for local linux/amd64 builds.
 HOST_GLIBC := $(shell \
@@ -102,8 +105,8 @@ build: build-agent build-hub
 
 rpm:
 	mkdir -p "$(RPMBUILD_DIR)"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
-	tar --exclude-vcs --exclude='./build' --transform 's,^\.,beszel-$(VERSION),' -czf "$(RPMBUILD_DIR)/SOURCES/beszel-$(VERSION).tar.gz" .
-	sed 's/^Version:.*/Version:        $(VERSION)/' supplemental/rpm/beszel.spec > "$(RPMBUILD_DIR)/SPECS/beszel.spec"
+	tar --exclude-vcs --exclude='./build' --transform 's,^\.,beszel-$(RPM_VERSION),' -czf "$(RPMBUILD_DIR)/SOURCES/beszel-$(RPM_VERSION).tar.gz" .
+	sed 's/^Version:.*/Version:        $(RPM_VERSION)/' supplemental/rpm/beszel.spec > "$(RPMBUILD_DIR)/SPECS/beszel.spec"
 	rpmbuild --define "_topdir $(RPMBUILD_DIR)" -ba "$(RPMBUILD_DIR)/SPECS/beszel.spec"
 
 generate-locales:
