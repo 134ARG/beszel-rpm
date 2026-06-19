@@ -8,6 +8,8 @@ SKIP_WEB ?= false
 # - true: always enable
 # - false: always disable
 NVML ?= auto
+VERSION ?= $(shell sed -n 's/.*Version = "\(.*\)".*/\1/p' beszel.go)
+RPMBUILD_DIR ?= $(CURDIR)/build/rpm
 
 # Detect glibc host for local linux/amd64 builds.
 HOST_GLIBC := $(shell \
@@ -41,7 +43,7 @@ endif
 # Set executable extension based on target OS
 EXE_EXT := $(if $(filter windows,$(OS)),.exe,)
 
-.PHONY: tidy build-agent build-hub build-hub-dev build clean lint dev-server dev-agent dev-hub dev generate-locales fetch-smartctl-conditional
+.PHONY: tidy build-agent build-hub build-hub-dev build clean lint dev-server dev-agent dev-hub dev generate-locales fetch-smartctl-conditional rpm
 .DEFAULT_GOAL := build
 
 clean:
@@ -97,6 +99,12 @@ build-hub-dev: tidy
 	GOOS=$(OS) GOARCH=$(ARCH) go build -tags development -o ./build/beszel-dev_$(OS)_$(ARCH)$(EXE_EXT) -ldflags "-w -s" ./internal/cmd/hub
 
 build: build-agent build-hub
+
+rpm:
+	mkdir -p "$(RPMBUILD_DIR)"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
+	tar --exclude-vcs --exclude='./build' --transform 's,^\.,beszel-$(VERSION),' -czf "$(RPMBUILD_DIR)/SOURCES/beszel-$(VERSION).tar.gz" .
+	sed 's/^Version:.*/Version:        $(VERSION)/' supplemental/rpm/beszel.spec > "$(RPMBUILD_DIR)/SPECS/beszel.spec"
+	rpmbuild --define "_topdir $(RPMBUILD_DIR)" -ba "$(RPMBUILD_DIR)/SPECS/beszel.spec"
 
 generate-locales:
 	@if [ ! -f ./internal/site/src/locales/en/en.ts ]; then \

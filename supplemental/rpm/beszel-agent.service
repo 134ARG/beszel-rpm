@@ -1,0 +1,43 @@
+[Unit]
+Description=Beszel Agent Service
+Documentation=https://beszel.dev/guide/agent-installation
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=beszel
+Group=beszel
+EnvironmentFile=-/etc/beszel-agent/beszel-agent.conf
+ExecStart=/usr/bin/beszel-agent
+WorkingDirectory=/var/lib/beszel-agent
+Restart=on-failure
+RestartSec=5
+StateDirectory=beszel-agent
+RuntimeDirectory=beszel-agent
+UMask=0077
+
+# Sandboxing that usually plays well with host monitoring on Fedora.
+NoNewPrivileges=yes
+KeyringMode=private
+LockPersonality=yes
+PrivateTmp=yes
+ProtectClock=yes
+ProtectHome=read-only
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/beszel-agent
+RemoveIPC=yes
+RestrictSUIDSGID=yes
+SystemCallArchitectures=native
+
+# Leave stricter host isolation off unless tested locally. The agent often
+# needs /proc, /sys, /dev, cgroups, netlink, sensors, or container sockets.
+# ProtectProc=invisible
+# PrivateDevices=yes
+# ProtectControlGroups=yes
+# RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target
