@@ -1,1 +1,1 @@
-u beszel - "Beszel service user" /var/lib/beszel /usr/sbin/nologin
+u beszel - "Beszel service user" /var/lib/beszel-agent /usr/sbin/nologin
