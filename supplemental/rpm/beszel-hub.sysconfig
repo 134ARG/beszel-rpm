@@ -1,2 +1,0 @@
-# Address and port used by "beszel serve --http".
-BESZEL_HUB_HTTP=0.0.0.0:8090

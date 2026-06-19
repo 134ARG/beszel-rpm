@@ -1,6 +1,6 @@
 # Fedora RPM packaging
 
-This directory contains Fedora-oriented RPM packaging for Beszel.
+This directory contains Fedora-oriented RPM packaging for the Beszel agent.
 
 Build locally from the repository root:
 
@@ -10,27 +10,27 @@ make rpm
 
 The build creates source and binary RPMs under `build/rpm/`.
 
-Install one or both subpackages:
+Install the agent package:
 
 ```bash
-sudo dnf install ./build/rpm/RPMS/*/beszel-hub-*.rpm
 sudo dnf install ./build/rpm/RPMS/*/beszel-agent-*.rpm
 ```
 
-The packages install systemd units but do not enable or start them automatically.
-
-Hub configuration lives in `/etc/sysconfig/beszel-hub`. The default hub service
-listens on `0.0.0.0:8090`.
+The package installs the systemd unit but does not enable or start it
+automatically (per Fedora preset policy).
 
 Agent configuration lives in `/etc/beszel-agent/beszel-agent.conf`. The file is
 owned by `root:beszel` with mode `0640` because it may contain secrets. At
 minimum, set `KEY` before starting `beszel-agent.service`. For websocket mode,
 also configure `HUB_URL` and `TOKEN`.
 
+The `beszel` service user is created from `/usr/lib/sysusers.d/beszel-agent.conf`
+with its home/state directory at `/var/lib/beszel-agent`.
+
 SELinux notes:
 
-- Binaries are installed to `/usr/bin`, so Fedora labels them as normal executables.
-- State is kept under `/var/lib/beszel-hub` and `/var/lib/beszel-agent`.
+- The binary is installed to `/usr/bin`, so Fedora labels it as a normal executable.
+- State is kept under `/var/lib/beszel-agent`.
 - Agent secrets can be stored directly in `/etc/beszel-agent/beszel-agent.conf`,
   which is installed with restricted permissions.
 
@@ -38,4 +38,5 @@ Example agent setup:
 
 ```bash
 sudoedit /etc/beszel-agent/beszel-agent.conf
+sudo systemctl enable --now beszel-agent.service
 ```
