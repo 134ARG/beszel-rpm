@@ -149,6 +149,9 @@ export interface SystemStats {
 	t?: Record<string, number>
 	/** fan speeds (RPM) — keyed by `<chip>_<label-or-fan-idx>` */
 	f?: Record<string, number>
+
+	/** humidities (% RH) */
+	hum?: Record<string, number>
 	/** extra filesystems */
 	efs?: Record<string, ExtraFsStats>
 	/** ZFS pool metrics */

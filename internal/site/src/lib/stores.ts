@@ -67,6 +67,9 @@ export const $temperatureFilter = atom("")
 /** Fan-speed chart filter */
 export const $fanFilter = atom("")
 
+/** Humidity chart filter */
+export const $humidityFilter = atom("")
+
 /** Fallback copy to clipboard dialog content */
 export const $copyContent = atom("")
 

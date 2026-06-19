@@ -982,6 +982,10 @@ msgstr "HTTP-метод"
 msgid "HTTP method: POST, GET, or HEAD (default: POST)"
 msgstr "HTTP-метод: POST, GET або HEAD (за замовчуванням: POST)"
 
+#: src/components/routes/system/charts/sensor-charts.tsx
+msgid "Humidity"
+msgstr ""
+
 #: src/components/routes/system/disk-io-sheet.tsx
 msgctxt "Disk I/O average operation time (iostat await)"
 msgid "I/O Await"
@@ -1461,6 +1465,10 @@ msgstr "Оновити"
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Relationships"
 msgstr "Зв’язки"
+
+#: src/components/routes/system/charts/sensor-charts.tsx
+msgid "Relative humidity of system sensors"
+msgstr ""
 
 #: src/components/login/login.tsx
 msgid "Request a one-time password"
