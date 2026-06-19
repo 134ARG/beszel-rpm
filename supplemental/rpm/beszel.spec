@@ -25,7 +25,9 @@ Beszel agent service and binary.
 # Match the upstream goreleaser agent build: CGO disabled, glibc tag enabled
 # for NVML GPU support on glibc-based distributions.
 export CGO_ENABLED=0
-go build -buildmode=pie -tags glibc -ldflags "-w -s" -o build/beszel-agent ./internal/cmd/agent
+# Build from the release tarball, which excludes VCS metadata; disable VCS
+# stamping so the build does not fail trying to read git state.
+go build -buildmode=pie -buildvcs=false -tags glibc -ldflags "-w -s" -o build/beszel-agent ./internal/cmd/agent
 
 %install
 install -Dpm 0755 build/beszel-agent %{buildroot}%{_bindir}/beszel-agent

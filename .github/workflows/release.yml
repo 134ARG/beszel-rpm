@@ -52,3 +52,35 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.TOKEN || secrets.GITHUB_TOKEN }}
           WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
           IS_FORK: ${{ github.repository_owner != 'henrygd' }}
+
+  rpm:
+    needs: goreleaser
+    runs-on: ubuntu-latest
+    container: fedora:latest
+    steps:
+      - name: Install build tooling
+        # golang satisfies the spec's BuildRequires check; the actual compile
+        # uses the version pinned by setup-go below (it takes PATH precedence).
+        run: |
+          dnf install -y golang make rpm-build systemd-rpm-macros git tar gzip findutils sed gh
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build agent RPM
+        # Version the RPM from the release tag (strip leading "v"), matching the
+        # other release artifacts, instead of the beszel.go constant. The Makefile
+        # maps any pre-release "-" to RPM's "~" (v1.0.0-rc1 -> 1.0.0~rc1).
+        run: make rpm VERSION="${GITHUB_REF_NAME#v}"
+
+      - name: Upload RPM to release
+        env:
+          GH_TOKEN: ${{ secrets.TOKEN || secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release upload "${{ github.ref_name }}" build/rpm/RPMS/*/*.rpm --clobber
