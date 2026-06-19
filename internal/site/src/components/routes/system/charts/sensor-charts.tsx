@@ -1,7 +1,7 @@
 import { t } from "@lingui/core/macro"
 import AreaChartDefault from "@/components/charts/area-chart"
 import { batteryStateTranslations } from "@/lib/i18n"
-import { $temperatureFilter, $userSettings } from "@/lib/stores"
+import { $humidityFilter, $temperatureFilter, $userSettings } from "@/lib/stores"
 import { cn, decimalString, formatTemperature, toFixedFloat } from "@/lib/utils"
 import type { ChartData, SystemStatsRecord } from "@/types"
 import { ChartCard, FilterBar } from "../chart-card"
@@ -52,6 +52,103 @@ export function BatteryChart({
 				contentFormatter={({ value }) => `${value}%`}
 			/>
 		</ChartCard>
+	)
+}
+
+export function HumidityChart({
+	chartData,
+	grid,
+	dataEmpty,
+}: {
+	chartData: ChartData
+	grid: boolean
+	dataEmpty: boolean
+}) {
+	const showHumidityChart = chartData.systemStats.at(-1)?.stats.hum
+
+	const filter = useStore($humidityFilter)
+
+	const statsRef = useRef(chartData.systemStats)
+	statsRef.current = chartData.systemStats
+
+	// Derive sensor names key from latest data point
+	let sensorNamesKey = ""
+	for (let i = chartData.systemStats.length - 1; i >= 0; i--) {
+		const hum = chartData.systemStats[i].stats?.hum
+		if (hum) {
+			sensorNamesKey = Object.keys(hum).sort().join("\0")
+			break
+		}
+	}
+
+	// Only recompute colors and dataKey functions when sensor names change
+	const { colorMap, dataKeys, sortedKeys } = useMemo(() => {
+		const stats = statsRef.current
+		const humSums = {} as Record<string, number>
+		for (const data of stats) {
+			const hum = data.stats?.hum
+			if (!hum) continue
+			for (const key of Object.keys(hum)) {
+				humSums[key] = (humSums[key] ?? 0) + hum[key]
+			}
+		}
+		const sorted = Object.keys(humSums).sort((a, b) => humSums[b] - humSums[a])
+		const colorMap = {} as Record<string, string>
+		const dataKeys = {} as Record<string, (d: SystemStatsRecord) => number | undefined>
+		for (let i = 0; i < sorted.length; i++) {
+			const key = sorted[i]
+			colorMap[key] = `hsl(${((i * 360) / sorted.length) % 360}, 60%, 55%)`
+			dataKeys[key] = (d: SystemStatsRecord) => d.stats?.hum?.[key]
+		}
+		return { colorMap, dataKeys, sortedKeys: sorted }
+	}, [sensorNamesKey])
+
+	const dataPoints = useMemo(() => {
+		return sortedKeys.map((key) => {
+			const filterTerms = filter
+				? filter
+						.toLowerCase()
+						.split(" ")
+						.filter((term) => term.length > 0)
+				: []
+			const filtered = filterTerms.length > 0 && !filterTerms.some((term) => key.toLowerCase().includes(term))
+			const strokeOpacity = filtered ? 0.1 : 1
+			return {
+				label: key,
+				dataKey: dataKeys[key],
+				color: colorMap[key],
+				opacity: strokeOpacity,
+			}
+		})
+	}, [sortedKeys, filter, dataKeys, colorMap])
+
+	if (!showHumidityChart) {
+		return null
+	}
+
+	const legend = dataPoints.length < 12
+
+	return (
+		<div className={cn("odd:last-of-type:col-span-full", { "col-span-full": !grid })}>
+			<ChartCard
+				empty={dataEmpty}
+				grid={grid}
+				title={t`Humidity`}
+				description={t`Relative humidity of system sensors`}
+				cornerEl={<FilterBar store={$humidityFilter} />}
+				legend={legend}
+			>
+				<LineChartDefault
+					chartData={chartData}
+					itemSorter={(a, b) => b.value - a.value}
+					domain={["auto", "auto"]}
+					legend={legend}
+					tickFormatter={(val) => `${toFixedFloat(val, 1)}%`}
+					contentFormatter={(item) => `${decimalString(item.value)}%`}
+					dataPoints={dataPoints}
+				></LineChartDefault>
+			</ChartCard>
+		</div>
 	)
 }
 

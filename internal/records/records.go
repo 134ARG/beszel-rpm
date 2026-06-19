@@ -188,6 +188,7 @@ func AverageSystemStatsSlice(records []system.Stats) system.Stats {
 	// accumulate cpu breakdown [user, system, iowait, steal, idle]
 	var cpuBreakdownSums []float64
 	tempCount := float64(0)
+	humidityCount := float64(0)
 
 	// Accumulate totals
 	for i := range records {
@@ -276,6 +277,17 @@ func AverageSystemStatsSlice(records []system.Stats) system.Stats {
 			tempCount++
 			for key, value := range stats.Temperatures {
 				sum.Temperatures[key] += value
+			}
+		}
+
+		// Accumulate humidities
+		if stats.Humidities != nil {
+			if sum.Humidities == nil {
+				sum.Humidities = make(map[string]float64, len(stats.Humidities))
+			}
+			humidityCount++
+			for key, value := range stats.Humidities {
+				sum.Humidities[key] += value
 			}
 		}
 
@@ -429,6 +441,13 @@ func AverageSystemStatsSlice(records []system.Stats) system.Stats {
 			avg[i] = uint8(v)
 		}
 		sum.CpuCoresUsage = avg
+	}
+
+	// Average humidities
+	if sum.Humidities != nil && humidityCount > 0 {
+		for key := range sum.Humidities {
+			sum.Humidities[key] = twoDecimals(sum.Humidities[key] / humidityCount)
+		}
 	}
 
 	// Average CPU breakdown

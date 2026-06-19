@@ -216,6 +216,9 @@ func (a *Agent) getSystemStats(cacheTimeMs uint16) system.Stats {
 	// TODO: maybe refactor to methods on systemStats
 	a.updateTemperatures(&systemStats)
 
+	// humidities (hwmon humidity*_input, e.g. SHT4x)
+	a.updateHumidities(&systemStats)
+
 	// GPU data
 	if a.gpuManager != nil {
 		// reset high gpu percent
